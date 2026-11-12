@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>1분 카드 매칭</title>
+<style>
+:root{--bg:#EEF1F6;--ink:#17203D;--sub:#5B6480;--line:#D5DAE6;--blue:#2F4BFF;--mint:#19B394;--paper:#fff}
+*{box-sizing:border-box;margin:0}
+body{font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:flex;justify-content:center;line-height:1.5}
+#app{width:100%;max-width:460px;min-height:100vh;background:var(--paper);display:flex;flex-direction:column;padding:24px 22px 32px;position:relative}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+button:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.screen{display:none;flex:1;flex-direction:column}
+.screen.on{display:flex}
+
+/* 카드 비주얼 */
+.card{width:100%;aspect-ratio:1.586;border-radius:14px;padding:16px 18px;color:#fff;position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 8px 20px rgba(23,32,61,.18)}
+.card::after{content:"";position:absolute;right:-30px;top:-30px;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.14)}
+.card .chip{width:34px;height:25px;border-radius:5px;background:linear-gradient(135deg,#f6dc9a,#c9a24b)}
+.card b{font-size:1.05rem;letter-spacing:-.01em}
+.card small{display:block;opacity:.85;font-size:.78rem}
+.card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.t-light{background:linear-gradient(135deg,#19B394,#0E6F66)}
+.t-beginner{background:linear-gradient(135deg,#5AA9FF,#2F4BFF)}
+.t-focus{background:linear-gradient(135deg,#FF7A59,#C73A5B)}
+.t-multi{background:linear-gradient(135deg,#8A5CFF,#4B2DB8)}
+.t-mileage{background:linear-gradient(135deg,#25305C,#0B1230)}
+.t-kpass{background:linear-gradient(135deg,#F4B63D,#D9731F)}
+
+/* 시작 화면 */
+.stage{position:relative;height:230px;margin:18px 0 8px}
+.stage .card{position:absolute;left:8%;width:84%;top:14px;transition:transform .7s ease,opacity .7s ease}
+.stage .card.p0{transform:rotate(-4deg) translateY(0);z-index:3}
+.stage .card.p1{transform:rotate(3deg) translateY(16px) scale(.96);opacity:.75;z-index:2}
+.stage .card.p2{transform:rotate(-1deg) translateY(30px) scale(.92);opacity:.45;z-index:1}
+h1{font-size:2.3rem;letter-spacing:-.04em;line-height:1.15;margin-top:30px}
+.lead{color:var(--sub);margin:10px 0 26px}
+.btn{display:block;width:100%;padding:16px;border-radius:12px;background:var(--blue);color:#fff;font-weight:700;font-size:1.05rem;text-align:center}
+.btn.ghost{background:var(--bg);color:var(--ink);margin-top:10px}
+.spacer{flex:1}
+
+/* 질문 */
+.top{display:flex;align-items:center;gap:12px;margin-bottom:34px}
+.back{width:36px;height:36px;border-radius:50%;background:var(--bg);font-size:1.1rem;flex:none}
+.back[hidden]{visibility:hidden;display:block}
+.bar{flex:1;height:8px;background:var(--line);border-radius:8px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--blue),var(--mint));border-radius:8px;transition:width .35s ease}
+.count{font-weight:700;font-size:.95rem;min-width:42px;text-align:right}
+.q{font-size:1.4rem;line-height:1.4;letter-spacing:-.03em;margin-bottom:26px;word-break:keep-all}
+.opts{display:flex;flex-direction:column;gap:12px}
+.opt{text-align:left;padding:17px 18px;border:2px solid var(--line);border-radius:14px;background:#fff;word-break:keep-all;transition:border-color .15s,background .15s}
+.opt:hover{border-color:var(--blue)}
+.opt.sel{border-color:var(--blue);background:#EBEEFF}
+.opt em{display:block;font-style:normal;color:var(--sub);font-size:.85rem;margin-top:3px}
+
+/* 결과 */
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 0 18px}
+.tab{padding:13px 8px;border-radius:12px;background:var(--bg);font-weight:600;font-size:.92rem;word-break:keep-all}
+.tab small{display:block;font-weight:500;color:var(--sub);font-size:.75rem}
+.tab.on{background:var(--ink);color:#fff}
+.tab.on small{color:#b9c0dd}
+.msg{background:#F4F6FB;border-radius:12px;padding:14px 16px;margin-bottom:18px;font-size:.95rem;word-break:keep-all}
+.msg p+p{margin-top:6px}
+.slider{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 2px 14px;scrollbar-width:none}
+.slider::-webkit-scrollbar{display:none}
+.slide{flex:0 0 84%;scroll-snap-align:center}
+.slide .info{padding:10px 2px 0;font-size:.88rem;color:var(--sub)}
+.slide .info strong{display:block;color:var(--ink);font-size:1rem}
+.nav{display:flex;justify-content:center;align-items:center;gap:14px;margin-bottom:18px}
+.nav button{width:38px;height:38px;border-radius:50%;background:var(--bg)}
+.dots{display:flex;gap:6px}
+.dots i{width:7px;height:7px;border-radius:50%;background:var(--line)}
+.dots i.on{background:var(--blue)}
+.note{font-size:.76rem;color:var(--sub);margin-top:16px;text-align:center;word-break:keep-all}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main id="app">
+
+<!-- 1페이지 -->
+<section class="screen on" id="s-start">
+  <div class="stage" id="stage" aria-hidden="true"></div>
+  <h1>1분 카드 매칭</h1>
+  <p class="lead">9개의 질문에 답하면, 내 소비 습관에 맞는 카드 유형과 추천 카드를 바로 보여드려요.</p>
+  <div class="spacer"></div>
+  <button class="btn" id="startBtn">START</button>
+  <p class="note">로그인과 개인정보 입력 없이 이용할 수 있어요.</p>
+</section>
+
+<!-- 2~10페이지 -->
+<section class="screen" id="s-q">
+  <div class="top">
+    <button class="back" id="backBtn" aria-label="이전 질문">←</button>
+    <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="9" id="barWrap"><i id="barFill"></i></div>
+    <span class="count" id="count">1 / 9</span>
+  </div>
+  <h2 class="q" id="qText"></h2>
+  <div class="opts" id="opts"></div>
+</section>
+
+<!-- 11페이지 -->
+<section class="screen" id="s-result">
+  <div class="tabs" role="tablist">
+    <button class="tab" id="tab0" role="tab" data-i="0">매칭 1<small>가볍게 쓸 카드</small></button>
+    <button class="tab" id="tab1" role="tab" data-i="1">매칭 2<small>마일리지 도전해볼래요?</small></button>
+  </div>
+  <div class="msg" id="msg"></div>
+  <div class="slider" id="slider"></div>
+  <div class="nav"><button id="prev" aria-label="이전 카드">‹</button><div class="dots" id="dots"></div><button id="next" aria-label="다음 카드">›</button></div>
+  <div class="spacer"></div>
+  <button class="btn" id="retry">카드 매칭 다시하기</button>
+  <button class="btn ghost" id="share">결과 공유하기</button>
+  <p class="note">추천 결과는 답변을 바탕으로 한 참고용이며, 카드 발급 가능 여부나 실시간 혜택 변경은 반영하지 않아요.</p>
+</section>
+
+</main>
+
+<script>
+/* ===== 카드 데이터 (실제 카드명·혜택·이미지는 여기에 교체해서 입력) =====
+   img 칸에 http(s):// 이미지 주소를 넣으면 이미지가 표시되고, 비워 두면 기본 카드 디자인이 나와요. */
+var TYPE_LABEL={light:"가볍게 쓸 카드",beginner:"초보자용 카드",focus:"혜택 집중형 카드",multi:"다영역 할인 카드",mileage:"마일리지 카드",kpass:"K-패스 관련 카드"};
+var CARDS=[
+ {name:"카드 A",type:"light",benefit:"생활 영역 기본 할인",fee:"연회비 낮음",img:""},
+ {name:"카드 B",type:"light",benefit:"편의점·카페 간편 할인",fee:"연회비 낮음",img:""},
+ {name:"카드 C",type:"beginner",benefit:"첫 사용자를 위한 단순 혜택",fee:"연회비 낮음",img:""},
+ {name:"카드 D",type:"beginner",benefit:"조건 없는 기본 적립",fee:"연회비 없음",img:""},
+ {name:"카드 E",type:"focus",benefit:"한 영역 최대 할인",fee:"연회비 보통",img:""},
+ {name:"카드 F",type:"focus",benefit:"특정 업종 집중 할인",fee:"연회비 보통",img:""},
+ {name:"카드 G",type:"multi",benefit:"여러 영역 골고루 할인",fee:"연회비 보통",img:""},
+ {name:"카드 H",type:"multi",benefit:"생활 전반 5% 할인",fee:"연회비 보통",img:""},
+ {name:"카드 I",type:"mileage",benefit:"항공 마일리지 적립",fee:"연회비 높음",img:""},
+ {name:"카드 J",type:"mileage",benefit:"해외 결제 마일리지 우대",fee:"연회비 높음",img:""},
+ {name:"카드 K",type:"kpass",benefit:"대중교통 추가 환급",fee:"연회비 보통",img:""},
+ {name:"카드 L",type:"kpass",benefit:"K-패스 연계 교통 할인",fee:"연회비 낮음",img:""}
+];
+
+/* ===== 질문 (선택지의 s는 유형별 점수) ===== */
+var Q=[
+ {q:"나의 한 달 신용카드 사용금액은?",o:[
+  {t:"100만 원 이내",s:{light:2}},
+  {t:"100만 원 이상",s:{mileage:2}}]},
+ {q:"연회비가 10만 원이 넘는 카드가 있다. 혜택도 10만 원 이상 제공한다면?",o:[
+  {t:"일단 발급 받고 써보면서 혜택을 체험해 본다.",s:{mileage:1,focus:1}},
+  {t:"아무리 좋아도 연회비가 비싸면 안 쓸 것 같다.",s:{light:2}},
+  {t:"연회비 캐시백 이벤트가 있다면 생각해 볼 것 같다.",s:{mileage:1}}]},
+ {q:"나는 무언가 결제할 때,",o:[
+  {t:"신용카드는 거의 안 쓰며, 체크카드 정도만 주로 사용한다.",s:{beginner:1,light:1}},
+  {t:"신용카드 반, 체크카드 반 정도로 골고루 쓰고 있다.",s:{multi:1}},
+  {t:"대부분 신용카드로 결제하고 있다.",s:{mileage:1}}]},
+ {q:"나는 카드를 고를 때",o:[
+  {t:"나한테 필요한 혜택을 고려해서 직접 고르는 편이다.",s:{focus:1,multi:1}},
+  {t:"주변에서 추천해 준 카드를 그냥 쓰는 편이다.",s:{light:1}}]},
+ {q:"나는 카드를 쓸 때",o:[
+  {t:"맞춤카드 준비완료! 결제 영역마다 최대한 혜택 받을 수 있는 카드를 여러 개 쓰고 있다.",s:{focus:2,multi:1}},
+  {t:"간단한 게 최고! 이것저것 따질 것 없이 그냥 한 개의 카드로 쭉 사용한다.",s:{light:2}}]},
+ {q:"두 가지 중 선호하는 카드 스타일은?",o:[
+  {t:"1가지 영역에서 50% 할인",d:"1가지 영역에서 확실한 할인",s:{focus:2}},
+  {t:"10가지 영역에서 각 5% 할인",d:"작지만 다양한 영역 커버",s:{multi:2}}]},
+ {q:"신용카드를 사용한 지는 얼마나 되셨나요?",o:[
+  {t:"아직 사용해 본 적 없음",s:{beginner:3,light:1}},
+  {t:"3년 이내",s:{}},
+  {t:"5년 이상",s:{mileage:1}},
+  {t:"이전에 사용했으나, 지금은 사용하지 않음",s:{beginner:1}}]},
+ {q:"최근 6개월 내에 발급 받은 신용카드 개수는?",o:[
+  {t:"없음",s:{}},
+  {t:"1~2개",s:{}},
+  {t:"3개 이상",s:{multi:1}}]},
+ {q:"K-패스를 사용하고 있나요?",o:[
+  {t:"K-패스 사용",s:{kpass:5}},
+  {t:"K-패스 미사용",s:{}}]}
+];
+
+var step=0,ans=[],score={},tabIdx=0,res=null;
+function $(id){return document.getElementById(id)}
+function show(id){["s-start","s-q","s-result"].forEach(function(s){$(s).classList.toggle("on",s===id)});window.scrollTo(0,0)}
+
+/* 카드 그리기 */
+function cardHTML(c){
+  var img=c.img?'<img src="'+c.img+'" alt="'+c.name+'" onerror="this.remove()">':"";
+  return '<div class="card t-'+c.type+'">'+img+'<span class="chip"></span><div><b>'+c.name+'</b><small>'+TYPE_LABEL[c.type]+'</small></div></div>';
+}
+
+/* 시작 화면 카드 슬라이드 */
+var order=[8,0,4,6,10,2],pos=0;
+function drawStage(){
+  var h="";
+  for(var k=0;k<3;k++){var c=CARDS[order[(pos+k)%order.length]];h+=cardHTML(c).replace('class="card','class="card p'+k);}
+  $("stage").innerHTML=h;
+}
+drawStage();
+setInterval(function(){if($("s-start").classList.contains("on")){pos=(pos+1)%order.length;drawStage();}},2600);
+
+/* 질문 */
+function drawQ(){
+  var d=Q[step];
+  $("count").textContent=(step+1)+" / "+Q.length;
+  $("barFill").style.width=((step+1)/Q.length*100)+"%";
+  $("barWrap").setAttribute("aria-valuenow",step+1);
+  $("backBtn").hidden=false;
+  $("qText").textContent=d.q;
+  var box=$("opts");box.innerHTML="";
+  d.o.forEach(function(op,i){
+    var b=document.createElement("button");
+    b.className="opt"+(ans[step]===i?" sel":"");
+    b.innerHTML=op.t+(op.d?"<em>"+op.d+"</em>":"");
+    b.onclick=function(){pick(i,b)};
+    box.appendChild(b);
+  });
+}
+function pick(i,b){
+  if(ans[step]!==undefined&&ans[step]===i&&false)return;
+  ans[step]=i;b.classList.add("sel");
+  setTimeout(function(){
+    if(step<Q.length-1){step++;drawQ();}else{finish();}
+  },180);
+}
+$("startBtn").onclick=function(){step=0;ans=[];show("s-q");drawQ();};
+$("backBtn").onclick=function(){if(step>0){step--;drawQ();}else{show("s-start");}};
+
+/* 결과 계산 */
+function finish(){
+  score={light:0,beginner:0,focus:0,multi:0,mileage:0,kpass:0};
+  ans.forEach(function(a,qi){var s=Q[qi].o[a].s;for(var k in s)score[k]+=s[k];});
+  var kpass=ans[8]===0;
+  // 매칭 1: 가벼운 유형 중 점수 높은 2가지 (+K-패스 사용자는 교통 카드 추가)
+  var light=["light","beginner","focus","multi"].sort(function(a,b){return score[b]-score[a]}).slice(0,2);
+  var list1=CARDS.filter(function(c){return light.indexOf(c.type)>-1});
+  if(kpass)list1=CARDS.filter(function(c){return c.type==="kpass"}).concat(list1);
+  var list2=CARDS.filter(function(c){return c.type==="mileage"});
+  var msgs1=[],msgs2=[];
+  if(ans[4]===1||score.light>=score.mileage)msgs1.push("당신은 간편하게 한 장의 카드를 쓰는 스타일이에요.");
+  if(ans[6]===0)msgs1.push("신용카드가 처음이라면 조건이 단순한 초보자용 카드부터 시작해 보세요.");
+  if(ans[5]===0&&ans[4]===0)msgs1.push("한 영역에서 크게 할인받는 혜택 집중형 카드가 잘 맞아요.");
+  if(ans[5]===1)msgs1.push("여러 영역에서 골고루 할인받는 카드가 잘 맞아요.");
+  if(kpass)msgs1.push("K-패스를 사용하고 있어 교통 혜택 카드를 함께 추천드려요.");
+  if(!msgs1.length)msgs1.push("나에게 맞는 카드를 찾았어요.");
+  msgs2.push(ans[0]===1?"월 사용금액이 높은 편이라 마일리지 카드도 고려해볼 만해요.":"월 사용금액이 크지 않다면 연회비 대비 혜택을 꼭 따져보세요.");
+  if(ans[2]===2)msgs2.push("대부분 신용카드로 결제하고 있어 마일리지 적립에 유리해요.");
+  res=[{cards:list1,msg:msgs1},{cards:list2,msg:msgs2}];
+  tabIdx=(score.mileage>=4&&score.mileage>score.light)?1:0;
+  drawResult();show("s-result");
+}
+function drawResult(){
+  $("tab0").classList.toggle("on",tabIdx===0);$("tab1").classList.toggle("on",tabIdx===1);
+  $("tab0").setAttribute("aria-selected",tabIdx===0);$("tab1").setAttribute("aria-selected",tabIdx===1);
+  var r=res[tabIdx];
+  $("msg").innerHTML=r.msg.map(function(m){return "<p>"+m+"</p>"}).join("");
+  $("slider").innerHTML=r.cards.map(function(c){
+    return '<div class="slide">'+cardHTML(c)+'<div class="info"><strong>'+c.name+'</strong>'+c.benefit+' · '+c.fee+'</div></div>';
+  }).join("");
+  $("slider").scrollLeft=0;
+  $("dots").innerHTML=r.cards.map(function(_,i){return '<i'+(i===0?' class="on"':'')+'></i>'}).join("");
+}
+$("tab0").onclick=function(){tabIdx=0;drawResult()};
+$("tab1").onclick=function(){tabIdx=1;drawResult()};
+function slideBy(d){var s=$("slider"),w=s.querySelector(".slide").offsetWidth+14;s.scrollBy({left:d*w,behavior:"smooth"});}
+$("prev").onclick=function(){slideBy(-1)};
+$("next").onclick=function(){slideBy(1)};
+$("slider").addEventListener("scroll",function(){
+  var s=$("slider"),sl=s.querySelector(".slide");if(!sl)return;
+  var i=Math.round(s.scrollLeft/(sl.offsetWidth+14));
+  var dots=$("dots").children;for(var k=0;k<dots.length;k++)dots[k].classList.toggle("on",k===i);
+});
+$("retry").onclick=function(){step=0;ans=[];show("s-start");};
+$("share").onclick=function(){
+  var r=res[tabIdx],names=r.cards.slice(0,3).map(function(c){return c.name}).join(", ");
+  var text="1분 카드 매칭 결과: "+names+" 추천!";
+  if(navigator.share){navigator.share({title:"1분 카드 매칭",text:text}).catch(function(){});}
+  else if(navigator.clipboard){navigator.clipboard.writeText(text).then(function(){$("share").textContent="결과를 복사했어요"},function(){});}
+};
+</script>
+</body>
+</html>
