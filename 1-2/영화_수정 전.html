@@ -1,0 +1,1265 @@
+ <!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CineTier - 영화 티어리스트 웹사이트</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        pastel: {
+                            50: '#F5F9FC',
+                            100: '#EBF3FA',
+                            200: '#D6E6F2',
+                            300: '#B9D5E9',
+                            400: '#7BB3D9',
+                            500: '#3B82F6',
+                            600: '#2563EB',
+                            700: '#1D4ED8',
+                        },
+                        tier: {
+                            S: '#FF7F7F',
+                            A: '#FFBF7F',
+                            B: '#FFDF7F',
+                            C: '#FFFF7F',
+                            D: '#BFFF7F',
+                            F: '#7FEBFF'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #F5F9FC;
+        }
+        .drag-over {
+            border: 2px dashed #3B82F6 !important;
+            background-color: rgba(214, 230, 242, 0.5) !important;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #EBF3FA;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #B9D5E9;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #7BB3D9;
+        }
+    </style>
+</head>
+<body class="text-slate-800 flex flex-col min-h-screen">
+
+    <!-- Header Navigation -->
+    <header class="bg-white/90 backdrop-blur-md border-b border-pastel-200 sticky top-0 z-40 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo & Brand -->
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('main')">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-pastel-500 to-pastel-300 flex items-center justify-center text-white font-black text-xl shadow-md">
+                        <i class="fa-solid font-film-canister fa-film"></i>
+                    </div>
+                    <span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pastel-700 to-pastel-500">
+                        CineTier
+                    </span>
+                </div>
+
+                <!-- Navigation Tabs -->
+                <nav class="hidden md:flex space-x-1 font-medium text-sm">
+                    <button onclick="switchTab('main')" id="tab-main" class="px-4 py-2 rounded-lg text-pastel-700 bg-pastel-100 font-semibold transition">
+                        <i class="fa-solid fa-house mr-1.5"></i>메인 Home
+                    </button>
+                    <button onclick="switchTab('search')" id="tab-search" class="px-4 py-2 rounded-lg text-slate-600 hover:text-pastel-600 hover:bg-pastel-50 transition">
+                        <i class="fa-solid fa-magnifying-glass mr-1.5"></i>영화 탐색
+                    </button>
+                    <button onclick="switchTab('create')" id="tab-create" class="px-4 py-2 rounded-lg text-slate-600 hover:text-pastel-600 hover:bg-pastel-50 transition">
+                        <i class="fa-solid fa-plus-minus mr-1.5"></i>티어리스트 제작
+                    </button>
+                    <button onclick="switchTab('mytier')" id="tab-mytier" class="px-4 py-2 rounded-lg text-slate-600 hover:text-pastel-600 hover:bg-pastel-50 transition">
+                        <i class="fa-solid fa-layer-group mr-1.5"></i>마이 티어
+                    </button>
+                    <button onclick="openSpecModal()" class="px-4 py-2 rounded-lg text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition font-medium">
+                        <i class="fa-solid fa-file-contract mr-1.5"></i>기획서 보기
+                    </button>
+                </nav>
+
+                <!-- Auth / User Info Area -->
+                <div id="auth-area" class="flex items-center space-x-3">
+                    <button onclick="openLoginModal()" class="px-4 py-2 bg-pastel-500 hover:bg-pastel-600 text-white rounded-lg text-sm font-semibold shadow-sm transition flex items-center">
+                        <i class="fa-solid fa-right-to-bracket mr-2"></i>로그인
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile Bottom Nav -->
+        <div class="md:hidden border-t border-pastel-200 bg-white flex justify-around py-2 text-xs">
+            <button onclick="switchTab('main')" class="flex flex-col items-center py-1 text-pastel-600">
+                <i class="fa-solid fa-house text-lg"></i>
+                <span class="mt-1">메인</span>
+            </button>
+            <button onclick="switchTab('search')" class="flex flex-col items-center py-1 text-slate-600">
+                <i class="fa-solid fa-magnifying-glass text-lg"></i>
+                <span class="mt-1">탐색</span>
+            </button>
+            <button onclick="switchTab('create')" class="flex flex-col items-center py-1 text-slate-600">
+                <i class="fa-solid fa-plus-circle text-lg"></i>
+                <span class="mt-1">제작</span>
+            </button>
+            <button onclick="switchTab('mytier')" class="flex flex-col items-center py-1 text-slate-600">
+                <i class="fa-solid fa-layer-group text-lg"></i>
+                <span class="mt-1">내 티어</span>
+            </button>
+            <button onclick="openSpecModal()" class="flex flex-col items-center py-1 text-indigo-600">
+                <i class="fa-solid fa-file-lines text-lg"></i>
+                <span class="mt-1">기획서</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+        <!-- 3-1. 메인 페이지 TAB -->
+        <section id="view-main" class="space-y-8">
+            <!-- Hero Banner -->
+            <div class="relative bg-gradient-to-r from-pastel-600 to-pastel-400 rounded-3xl p-6 sm:p-10 text-white shadow-xl overflow-hidden">
+                <div class="relative z-10 max-w-2xl">
+                    <span class="px-3 py-1 bg-white/20 rounded-full text-xs font-semibold uppercase tracking-wider backdrop-blur-md border border-white/30 mb-3 inline-block">S~F 등급별 영화 분류</span>
+                    <h1 class="text-3xl sm:text-4xl font-extrabold mb-3 leading-tight">나만의 영화 티어리스트를 만들고 공유해보세요!</h1>
+                    <p class="text-pastel-100 text-sm sm:text-base mb-6">최신 관객수 및 평점 데이터 기준 영화를 분류하고, 영화제 출품작도 손쉽게 직접 추가하여 나만의 최고 영화 랭킹을 관리할 수 있습니다.</p>
+                    <div class="flex flex-wrap gap-3">
+                        <button onclick="switchTab('create')" class="px-5 py-2.5 bg-white text-pastel-700 font-bold rounded-xl shadow-md hover:bg-pastel-50 transition">
+                            <i class="fa-solid fa-wand-magic-sparkles mr-2"></i>티어리스트 만들기
+                        </button>
+                        <button onclick="openSpecModal()" class="px-5 py-2.5 bg-pastel-700/40 hover:bg-pastel-700/60 backdrop-blur-md text-white font-semibold rounded-xl border border-white/20 transition">
+                            <i class="fa-solid fa-circle-info mr-2"></i>MVP 기획서 검토
+                        </button>
+                    </div>
+                </div>
+                <i class="fa-solid fa-film absolute -right-6 -bottom-10 text-9xl text-white/10 pointer-events-none transform -rotate-12"></i>
+            </div>
+
+            <!-- Popular Movies Section -->
+            <div>
+                <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900 flex items-center">
+                            <i class="fa-solid fa-fire text-amber-500 mr-2"></i>인기 영화 탐색
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-0.5">TMDB 데이터베이스 기반 최신 영화 정보</p>
+                    </div>
+                    <div class="flex bg-pastel-100 p-1 rounded-xl text-xs font-semibold">
+                        <button id="sort-audience-btn" onclick="sortPopularMovies('audience')" class="px-3 py-1.5 rounded-lg bg-white text-pastel-700 shadow-sm transition">
+                            <i class="fa-solid fa-users mr-1"></i>관객 수 순
+                        </button>
+                        <button id="sort-rating-btn" onclick="sortPopularMovies('rating')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-pastel-600 transition">
+                            <i class="fa-solid fa-star mr-1"></i>평점 순
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Movies Grid -->
+                <div id="main-movies-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    <!-- Dynamic Rendering -->
+                </div>
+            </div>
+
+            <!-- Public Tierlists Section -->
+            <div class="pt-6 border-t border-pastel-200">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900 flex items-center">
+                            <i class="fa-solid fa-globe text-pastel-500 mr-2"></i>전체 공개 티어리스트
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-0.5">다른 사용자들이 직접 제작하고 공유한 영화 티어</p>
+                    </div>
+                </div>
+
+                <div id="public-tierlist-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Dynamic Rendering -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 3-3. 영화 검색 & 출품작 직접 추가 TAB -->
+        <section id="view-search" class="space-y-6 hidden">
+            <div class="bg-white p-6 rounded-2xl border border-pastel-200 shadow-sm">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="relative flex-1">
+                        <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <input type="text" id="movie-search-input" onkeyup="filterMovieSearch()" placeholder="영화 제목으로 검색하세요..." class="w-full pl-11 pr-4 py-3 bg-pastel-50 border border-pastel-200 rounded-xl focus:ring-2 focus:ring-pastel-400 focus:bg-white outline-none transition text-sm">
+                    </div>
+                    <button onclick="openCustomMovieModal()" class="px-5 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-sm font-semibold shadow-sm transition flex items-center justify-center whitespace-nowrap">
+                        <i class="fa-solid fa-plus-circle mr-2"></i>영화제 출품작 직접 추가
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center px-1">
+                <span class="text-sm text-slate-500" id="search-result-count">총 12개의 영화가 표시됨</span>
+                <span class="text-xs text-indigo-600 font-medium bg-indigo-50 px-2.5 py-1 rounded-md">TMDB API + 유저 커스텀 영화</span>
+            </div>
+
+            <div id="search-movies-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                <!-- Dynamic Search Render -->
+            </div>
+        </section>
+
+        <!-- 3-4. 티어리스트 제작 TAB -->
+        <section id="view-create" class="space-y-6 hidden">
+            <!-- Alert / Notice Box -->
+            <div class="bg-pastel-100/70 border border-pastel-300 rounded-2xl p-4 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="p-2 bg-pastel-500 text-white rounded-xl">
+                        <i class="fa-solid fa-lightbulb"></i>
+                    </div>
+                    <div class="text-xs sm:text-sm">
+                        <span class="font-bold text-pastel-700">도움말:</span> 아래 [선택 가능한 영화 목록]에서 영화 카드를 <b>드래그하여 등급 셀에 드롭</b>하거나 <b>클릭하여 즉시 등록</b>하세요. (동일 영화 중복 배치 방지 적용)
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tierlist Header Input Section -->
+            <div class="bg-white p-6 rounded-2xl border border-pastel-200 shadow-sm space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-slate-700 mb-1">티어리스트 제목 *</label>
+                        <input type="text" id="tier-title" placeholder="예: 2026년 인생 최애 영화 Tier List" class="w-full px-4 py-2.5 bg-pastel-50 border border-pastel-200 rounded-xl focus:ring-2 focus:ring-pastel-400 outline-none text-sm font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">공개 범위 *</label>
+                        <select id="tier-visibility" class="w-full px-4 py-2.5 bg-pastel-50 border border-pastel-200 rounded-xl focus:ring-2 focus:ring-pastel-400 outline-none text-sm font-medium">
+                            <option value="public">전체 공개 (모든 사용자 열람)</option>
+                            <option value="link">링크 공개 (공유 링크 보유자만)</option>
+                            <option value="private">비공개 (작성자 본인만 열람)</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">티어리스트 설명</label>
+                    <textarea id="tier-desc" rows="2" placeholder="이 티어리스트의 작성 기준이나 전달하고 싶은 설명을 자유롭게 적어주세요." class="w-full px-4 py-2 bg-pastel-50 border border-pastel-200 rounded-xl focus:ring-2 focus:ring-pastel-400 outline-none text-sm"></textarea>
+                </div>
+            </div>
+
+            <!-- Tier Board Area -->
+            <div class="bg-slate-900 rounded-2xl overflow-hidden shadow-xl border border-slate-800" id="tier-board">
+                <!-- S Tier -->
+                <div class="flex min-h-[100px] border-b border-slate-800">
+                    <div class="w-20 sm:w-28 bg-tier-S flex flex-col items-center justify-center font-black text-2xl text-slate-900 shrink-0 select-none">
+                        <span>S</span>
+                        <span class="text-[10px] font-normal tracking-tight opacity-75">TOP CLASS</span>
+                    </div>
+                    <div class="tier-row flex-1 p-3 flex flex-wrap gap-2 items-center bg-slate-900/90 transition" data-tier="S" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'S')"></div>
+                </div>
+                <!-- A Tier -->
+                <div class="flex min-h-[100px] border-b border-slate-800">
+                    <div class="w-20 sm:w-28 bg-tier-A flex flex-col items-center justify-center font-black text-2xl text-slate-900 shrink-0 select-none">
+                        <span>A</span>
+                        <span class="text-[10px] font-normal tracking-tight opacity-75">GREAT</span>
+                    </div>
+                    <div class="tier-row flex-1 p-3 flex flex-wrap gap-2 items-center bg-slate-900/90 transition" data-tier="A" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'A')"></div>
+                </div>
+                <!-- B Tier -->
+                <div class="flex min-h-[100px] border-b border-slate-800">
+                    <div class="w-20 sm:w-28 bg-tier-B flex flex-col items-center justify-center font-black text-2xl text-slate-900 shrink-0 select-none">
+                        <span>B</span>
+                        <span class="text-[10px] font-normal tracking-tight opacity-75">GOOD</span>
+                    </div>
+                    <div class="tier-row flex-1 p-3 flex flex-wrap gap-2 items-center bg-slate-900/90 transition" data-tier="B" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'B')"></div>
+                </div>
+                <!-- C Tier -->
+                <div class="flex min-h-[100px] border-b border-slate-800">
+                    <div class="w-20 sm:w-28 bg-tier-C flex flex-col items-center justify-center font-black text-2xl text-slate-900 shrink-0 select-none">
+                        <span>C</span>
+                        <span class="text-[10px] font-normal tracking-tight opacity-75">AVERAGE</span>
+                    </div>
+                    <div class="tier-row flex-1 p-3 flex flex-wrap gap-2 items-center bg-slate-900/90 transition" data-tier="C" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'C')"></div>
+                </div>
+                <!-- D Tier -->
+                <div class="flex min-h-[100px] border-b border-slate-800">
+                    <div class="w-20 sm:w-28 bg-tier-D flex flex-col items-center justify-center font-black text-2xl text-slate-900 shrink-0 select-none">
+                        <span>D</span>
+                        <span class="text-[10px] font-normal tracking-tight opacity-75">MEDIOCRE</span>
+                    </div>
+                    <div class="tier-row flex-1 p-3 flex flex-wrap gap-2 items-center bg-slate-900/90 transition" data-tier="D" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'D')"></div>
+                </div>
+                <!-- F Tier -->
+                <div class="flex min-h-[100px]">
+                    <div class="w-20 sm:w-28 bg-tier-F flex flex-col items-center justify-center font-black text-2xl text-slate-900 shrink-0 select-none">
+                        <span>F</span>
+                        <span class="text-[10px] font-normal tracking-tight opacity-75">BAD</span>
+                    </div>
+                    <div class="tier-row flex-1 p-3 flex flex-wrap gap-2 items-center bg-slate-900/90 transition" data-tier="F" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'F')"></div>
+                </div>
+            </div>
+
+            <!-- Action Save Bar -->
+            <div class="flex justify-between items-center pt-2">
+                <button onclick="resetTierBoard()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-sm font-semibold transition">
+                    <i class="fa-solid fa-rotate-left mr-1.5"></i>보드 초기화
+                </button>
+                <button onclick="saveTierlist()" class="px-6 py-3 bg-pastel-500 hover:bg-pastel-600 text-white rounded-xl font-bold shadow-lg shadow-pastel-500/30 transition flex items-center">
+                    <i class="fa-solid fa-floppy-disk mr-2"></i>티어리스트 저장하기
+                </button>
+            </div>
+
+            <!-- Movie Selection Shelf -->
+            <div class="bg-white p-6 rounded-2xl border border-pastel-200 shadow-sm space-y-4">
+                <div class="flex justify-between items-center">
+                    <h3 class="font-bold text-slate-800 text-base flex items-center">
+                        <i class="fa-solid fa-film text-pastel-500 mr-2"></i>선택 가능한 영화 목록
+                    </h3>
+                    <span class="text-xs text-slate-500">클릭 또는 드래그하여 위 등급 칸에 배치하세요.</span>
+                </div>
+                <div id="selection-shelf" class="flex overflow-x-auto p-2 space-x-3 custom-scrollbar min-h-[140px] items-center bg-pastel-50 rounded-xl border border-dashed border-pastel-300">
+                    <!-- Dynamic Movies Shelf Cards -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 3-5. 마이 티어리스트 TAB -->
+        <section id="view-mytier" class="space-y-6 hidden">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-900">내 티어리스트 목록</h2>
+                    <p class="text-xs text-slate-500 mt-1">내가 생성한 영화 티어리스트 (사용자당 최대 5개 작성 가능)</p>
+                </div>
+                <div class="text-xs font-semibold px-3 py-1.5 bg-pastel-100 text-pastel-700 rounded-lg">
+                    작성 현황: <span id="mytier-count" class="font-bold text-pastel-600">0</span> / 5 개
+                </div>
+            </div>
+
+            <div id="mytier-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Dynamic My Tierlists Render -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-pastel-200 py-6 mt-12 text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-2">
+                <div class="w-6 h-6 rounded bg-pastel-500 flex items-center justify-center text-white text-xs font-black">C</div>
+                <span class="font-bold text-slate-700">CineTier MVP Prototype</span>
+                <span>| JavaScript + React + MySQL Architecture Spec</span>
+            </div>
+            <div class="flex space-x-4">
+                <button onclick="openSpecModal()" class="hover:text-pastel-600 underline">개발 기획서 및 미정 사항 보기</button>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ================= MODALS & POPUPS ================= -->
+
+    <!-- 1. 소셜 로그인 & 닉네임 설정 모달 (3-2) -->
+    <div id="modal-login" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-pastel-100 space-y-6">
+            <div class="text-center">
+                <div class="w-12 h-12 bg-pastel-100 text-pastel-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-xl font-black">
+                    <i class="fa-solid fa-user-lock"></i>
+                </div>
+                <h3 class="text-xl font-bold text-slate-900">소셜 로그인</h3>
+                <p class="text-xs text-slate-500 mt-1">로그인 후 나만의 영화 티어리스트를 자유롭게 제작하세요.</p>
+            </div>
+
+            <div class="space-y-3">
+                <!-- Google Login Button -->
+                <button onclick="simulateSocialLogin('Google')" class="w-full flex items-center justify-center py-3 px-4 border border-slate-200 rounded-xl font-semibold text-sm hover:bg-slate-50 transition shadow-sm">
+                    <svg class="w-5 h-5 mr-3" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+                    Google 계정으로 계속하기
+                </button>
+                <!-- Kakao Login Button -->
+                <button onclick="simulateSocialLogin('Kakao')" class="w-full flex items-center justify-center py-3 px-4 bg-[#FEE500] hover:bg-[#fdd800] text-[#191919] font-semibold text-sm rounded-xl transition shadow-sm">
+                    <i class="fa-solid fa-comment mr-3 text-lg"></i>
+                    카카오 계정으로 계속하기
+                </button>
+            </div>
+
+            <!-- Nickname Setting Step (Hidden Initially) -->
+            <div id="nickname-step" class="hidden border-t border-slate-100 pt-4 space-y-3">
+                <div class="bg-pastel-50 p-3 rounded-xl border border-pastel-200">
+                    <span class="text-xs font-bold text-pastel-700 block mb-1">소셜 인증 성공!</span>
+                    <label class="block text-xs text-slate-600 mb-1">사용하실 닉네임을 설정해 주세요.</label>
+                    <input type="text" id="nickname-input" placeholder="닉네임 입력 (예: 영화왕)" class="w-full px-3 py-2 bg-white border border-pastel-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pastel-400">
+                </div>
+                <button onclick="confirmNickname()" class="w-full py-2.5 bg-pastel-600 hover:bg-pastel-700 text-white rounded-xl font-bold text-sm transition">
+                    닉네임 설정 완료
+                </button>
+            </div>
+
+            <div class="text-right">
+                <button onclick="closeModal('modal-login')" class="text-xs text-slate-400 hover:text-slate-600">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. 영화제 출품작 직접 추가 모달 (3-3) -->
+    <div id="modal-custom-movie" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-pastel-100 space-y-4">
+            <div class="flex justify-between items-center border-b border-pastel-100 pb-3">
+                <h3 class="text-lg font-bold text-slate-900 flex items-center">
+                    <i class="fa-solid fa-clapperboard text-emerald-500 mr-2"></i>영화제 출품작 직접 추가
+                </h3>
+                <button onclick="closeModal('modal-custom-movie')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">영화 제목 *</label>
+                    <input type="text" id="custom-title" placeholder="예: 2026 칸 독립영화 출품작" class="w-full px-3 py-2 bg-pastel-50 border border-pastel-200 rounded-xl outline-none focus:ring-2 focus:ring-pastel-400 text-sm">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">포스터 이미지 URL (선택)</label>
+                    <input type="text" id="custom-poster" placeholder="https://example.com/poster.jpg (비워둘 시 기본 포스터)" class="w-full px-3 py-2 bg-pastel-50 border border-pastel-200 rounded-xl outline-none focus:ring-2 focus:ring-pastel-400">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">평점 (0.0 ~ 10.0)</label>
+                        <input type="number" id="custom-rating" step="0.1" max="10" min="0" value="8.5" class="w-full px-3 py-2 bg-pastel-50 border border-pastel-200 rounded-xl outline-none focus:ring-2 focus:ring-pastel-400">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 mb-1">관객 수 (명)</label>
+                        <input type="number" id="custom-audience" value="12500" class="w-full px-3 py-2 bg-pastel-50 border border-pastel-200 rounded-xl outline-none focus:ring-2 focus:ring-pastel-400">
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-2 flex space-x-2">
+                <button onclick="closeModal('modal-custom-movie')" class="w-1/2 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs transition">취소</button>
+                <button onclick="saveCustomMovie()" class="w-1/2 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold text-xs transition">영화 목록에 등록</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. 티어리스트 상세 보기 모달 (3-5, 3-6, 3-7) -->
+    <div id="modal-detail" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl border border-pastel-100 space-y-6 my-8">
+            <!-- Top Header -->
+            <div class="flex justify-between items-start border-b border-pastel-200 pb-4">
+                <div>
+                    <div class="flex items-center space-x-2 mb-1">
+                        <span id="detail-visibility-badge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-pastel-100 text-pastel-700">전체 공개</span>
+                        <span id="detail-author" class="text-xs text-slate-500">작성자: 익명</span>
+                    </div>
+                    <h2 id="detail-title" class="text-2xl font-bold text-slate-900">티어리스트 제목</h2>
+                    <p id="detail-desc" class="text-xs text-slate-600 mt-1">티어리스트 설명 내용</p>
+                </div>
+                <button onclick="closeModal('modal-detail')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+
+            <!-- Readonly Board View -->
+            <div id="detail-board-view" class="bg-slate-900 rounded-2xl overflow-hidden shadow-inner border border-slate-800">
+                <!-- Rendered Dynamically -->
+            </div>
+
+            <!-- Share & Edit Actions -->
+            <div class="bg-pastel-50 p-4 rounded-2xl border border-pastel-200 space-y-3">
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-3">
+                    <div class="text-xs text-slate-600">
+                        <i class="fa-solid fa-link text-pastel-500 mr-1"></i>
+                        공유 링크: <span id="detail-share-url" class="font-mono text-pastel-700 select-all font-semibold">https://cinetier.app/t/v1-abc1234</span>
+                        <span class="text-[10px] text-slate-400 block sm:inline sm:ml-2">(만료 기간 없음)</span>
+                    </div>
+                    <button onclick="copyShareLink()" class="px-3.5 py-2 bg-pastel-500 hover:bg-pastel-600 text-white rounded-xl text-xs font-bold transition whitespace-nowrap shadow-sm">
+                        <i class="fa-solid fa-copy mr-1.5"></i>링크 복사
+                    </button>
+                </div>
+                
+                <!-- Notice for Edit Link Invalidation (3-7) -->
+                <div class="text-[11px] text-amber-700 bg-amber-50 p-2.5 rounded-xl border border-amber-200 flex items-start space-x-2">
+                    <i class="fa-solid fa-triangle-exclamation mt-0.5 shrink-0"></i>
+                    <span><b>안내 (정책 3-7):</b> 티어리스트를 수정하면 기존 공유 링크는 즉시 접근할 수 없게 되며, 새 버전의 링크가 재발급됩니다.</span>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center pt-2">
+                <div id="detail-owner-actions" class="flex space-x-2">
+                    <button onclick="editCurrentTierlist()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition">
+                        <i class="fa-solid fa-pen-to-square mr-1"></i>수정하기
+                    </button>
+                    <button onclick="deleteCurrentTierlist()" class="px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-xl text-xs font-bold transition">
+                        <i class="fa-solid fa-trash-can mr-1"></i>삭제하기
+                    </button>
+                </div>
+                <button onclick="closeModal('modal-detail')" class="px-5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-bold transition">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. 기획서 & 미정 사항 보기 모달 (섹션 1~7 반영) -->
+    <div id="modal-spec" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl border border-pastel-100 space-y-6 my-8 max-h-[85vh] flex flex-col">
+            <div class="flex justify-between items-center border-b border-pastel-200 pb-3">
+                <h3 class="text-xl font-bold text-slate-900 flex items-center">
+                    <i class="fa-solid fa-file-contract text-indigo-600 mr-2"></i>영화 티어리스트 웹사이트 기획서 (5일 MVP)
+                </h3>
+                <button onclick="closeModal('modal-spec')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+
+            <div class="overflow-y-auto space-y-4 text-xs sm:text-sm text-slate-700 pr-2 custom-scrollbar flex-1">
+                <div class="bg-indigo-50 p-4 rounded-2xl border border-indigo-100 text-indigo-900">
+                    <h4 class="font-bold mb-1 text-base">📌 프로젝트 핵심 목표</h4>
+                    <p class="text-xs">영화에 대한 개인 평가를 S~F 등급으로 분류하여 자신만의 티어리스트를 제작하고, 다른 사용자와 만료 기간 없는 공유 링크로 소통하는 5일 개발 MVP 웹 서비스.</p>
+                </div>
+
+                <!-- 1. 사용자 & 2. 목적 -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-pastel-50 p-4 rounded-xl border border-pastel-200">
+                        <h5 class="font-bold text-slate-900 mb-2">1. 사용자 (User)</h5>
+                        <ul class="list-disc list-inside space-y-1 text-xs">
+                            <li><b>주요 사용자:</b> 소셜 로그인 회원</li>
+                            <li><b>비회원:</b> 전체 공개 티어리스트 열람</li>
+                            <li><b>로그인 방식:</b> 구글, 카카오 소셜 로그인</li>
+                            <li><b>닉네임:</b> 로그인 후 직접 설정</li>
+                        </ul>
+                    </div>
+                    <div class="bg-pastel-50 p-4 rounded-xl border border-pastel-200">
+                        <h5 class="font-bold text-slate-900 mb-2">2. 주요 기능 목적</h5>
+                        <ul class="list-disc list-inside space-y-1 text-xs">
+                            <li>S~F 등급별 영화 순위 기록</li>
+                            <li>타 사용자 공개 티어리스트 탐색</li>
+                            <li>관객 수 및 평점 기준 영화 탐색</li>
+                            <li>링크를 이용한 간편 공유</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 3. 화면 & 세부 정책 -->
+                <div class="bg-white p-4 rounded-xl border border-slate-200 space-y-2">
+                    <h5 class="font-bold text-slate-900 border-b pb-1">3. 세부 기능 및 완료 조건 Check point</h5>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                        <div class="flex items-center space-x-1 text-emerald-700">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>구글/카카오 소셜 로그인 시뮬레이션</span>
+                        </div>
+                        <div class="flex items-center space-x-1 text-emerald-700">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>TMDB 영화 검색 & 영화제 출품작 직접 추가</span>
+                        </div>
+                        <div class="flex items-center space-x-1 text-emerald-700">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>S/A/B/C/D/F 등급 드래그 앤 드롭 배치</span>
+                        </div>
+                        <div class="flex items-center space-x-1 text-emerald-700">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>동일 영화 중복 배치 방지 알고리즘</span>
+                        </div>
+                        <div class="flex items-center space-x-1 text-emerald-700">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>사용자당 최대 5개 티어리스트 작성 제한</span>
+                        </div>
+                        <div class="flex items-center space-x-1 text-emerald-700">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>공개 범위 (전체 공개 / 비공개 / 링크 공개)</span>
+                        </div>
+                        <div class="flex items-center space-x-1 text-emerald-700">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>수정 시 기존 공유 링크 무효화 (버전 갱신)</span>
+                        </div>
+                        <div class="flex items-center space-x-1 text-emerald-700">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>관객 수 / 평점 정렬 필터</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 7. 추가 확인이 필요한 사항 (미정 사항) -->
+                <div class="bg-amber-50 p-4 rounded-xl border border-amber-200">
+                    <h5 class="font-bold text-amber-900 mb-2 flex items-center">
+                        <i class="fa-solid fa-circle-question mr-2"></i>7. 추가 확인이 필요한 사항 (논의 필요)
+                    </h5>
+                    <ol class="list-decimal list-inside space-y-1 text-xs text-amber-800">
+                        <li><b>관객 수 데이터:</b> API가 관객수 데이터를 미제공할 시 인기도(Popularity) 대체 여부</li>
+                        <li><b>영화제 출품작 직접 추가:</b> 포스터 URL 및 평점 외에 감독/개봉연도 추가 입력 범위 지정</li>
+                        <li><b>비공개 티어리스트:</b> 작성자 본인 열람 가능 여부 (본 프로토타입은 본인 열람 가능)</li>
+                        <li><b>공유 링크 수정 정책:</b> 수정 후 접근 불가 시 새로운 버전 hash ID 발급 정책 채택</li>
+                        <li><b>5일 개발 일정:</b> Day 1(로그인/DB) ~ Day 5(공유/테스트) 일별 상세 작업 분배</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="pt-2 text-right">
+                <button onclick="closeModal('modal-spec')" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs transition">확인 완료</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- UI Message Alert Box Toast -->
+    <div id="toast-msg" class="fixed bottom-5 right-5 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl z-50 transform translate-y-20 opacity-0 transition-all duration-300 flex items-center space-x-3 text-xs sm:text-sm font-medium">
+        <i id="toast-icon" class="fa-solid fa-circle-info text-pastel-400 text-lg"></i>
+        <span id="toast-text">메시지 내용</span>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // ================= GLOBAL STATE =================
+        let currentUser = null; // { id: 'user_1', nickname: '영화매니아', provider: 'Google' }
+        let currentTab = 'main';
+        
+        // Initial Mock Movies Database (TMDB Standard Mock)
+        let moviesDB = [
+            { id: 'm1', title: '인터스텔라', poster: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=300&q=80', rating: 9.3, audience: 10340000, isCustom: false },
+            { id: 'm2', title: '파묘', poster: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=300&q=80', rating: 8.8, audience: 11900000, isCustom: false },
+            { id: 'm3', title: '인셉션', poster: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=300&q=80', rating: 9.2, audience: 6000000, isCustom: false },
+            { id: 'm4', title: '라라랜드', poster: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300&q=80', rating: 9.0, audience: 3700000, isCustom: false },
+            { id: 'm5', title: '서울의 봄', poster: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=300&q=80', rating: 9.5, audience: 13120000, isCustom: false },
+            { id: 'm6', title: '다크 나이트', poster: 'https://images.unsplash.com/photo-1533928298208-27ff66555d8d?w=300&q=80', rating: 9.4, audience: 6300000, isCustom: false },
+            { id: 'm7', title: '센과 치히로의 행방불명', poster: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=300&q=80', rating: 9.1, audience: 2000000, isCustom: false },
+            { id: 'm8', title: '기생충', poster: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300&q=80', rating: 9.0, audience: 10310000, isCustom: false },
+            { id: 'm9', title: '어벤져스: 엔드게임', poster: 'https://images.unsplash.com/photo-1568832359672-e36cf5d74f54?w=300&q=80', rating: 9.1, audience: 13970000, isCustom: false },
+            { id: 'm10', title: '센트럴 영화제 독립 단편', poster: 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=300&q=80', rating: 9.7, audience: 8500, isCustom: true }
+        ];
+
+        // Public & User Tierlists Data Store
+        let tierlistsDB = [
+            {
+                id: 't_demo_1',
+                userId: 'user_sample',
+                author: '시네필김씨',
+                title: '2020년대 최고의 명작 영화 정리',
+                desc: '개인적으로 생각하는 최근 5년간 최고작들입니다.',
+                visibility: 'public', // public, link, private
+                version: 1,
+                items: {
+                    'S': ['m5', 'm1'],
+                    'A': ['m2', 'm8'],
+                    'B': ['m3', 'm4'],
+                    'C': ['m6'],
+                    'D': [],
+                    'F': []
+                },
+                createdAt: '2026-03-01'
+            },
+            {
+                id: 't_demo_2',
+                userId: 'user_sample2',
+                author: '무비마스터',
+                title: 'SF & 판타지 레전드 영화 티어',
+                desc: '볼 때마다 소름 돋는 영화 모음',
+                visibility: 'public',
+                version: 1,
+                items: {
+                    'S': ['m1', 'm6'],
+                    'A': ['m3', 'm9'],
+                    'B': ['m7'],
+                    'C': [],
+                    'D': [],
+                    'F': []
+                },
+                createdAt: '2026-03-02'
+            }
+        ];
+
+        // Currently Editing Tierlist State
+        let currentBoardState = {
+            S: [], A: [], B: [], C: [], D: [], F: []
+        };
+        let activeEditingId = null; // null if creating new, else string
+
+        // Temp login holder
+        let tempSocialProvider = null;
+
+        // ================= INITIALIZATION =================
+        window.onload = function() {
+            renderPopularMovies('audience');
+            renderPublicTierlists();
+            renderSearchMovies(moviesDB);
+            renderSelectionShelf();
+            updateAuthUI();
+        };
+
+        // ================= UI TAB SWITCHING =================
+        function switchTab(tabName) {
+            currentTab = tabName;
+            
+            // Hide all tabs
+            ['main', 'search', 'create', 'mytier'].forEach(t => {
+                document.getElementById(`view-${t}`).classList.add('hidden');
+                const btn = document.getElementById(`tab-${t}`);
+                if (btn) {
+                    btn.className = "px-4 py-2 rounded-lg text-slate-600 hover:text-pastel-600 hover:bg-pastel-50 transition";
+                }
+            });
+
+            // Show active tab
+            document.getElementById(`view-${tabName}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tab-${tabName}`);
+            if (activeBtn) {
+                activeBtn.className = "px-4 py-2 rounded-lg text-pastel-700 bg-pastel-100 font-semibold transition";
+            }
+
+            if (tabName === 'mytier') {
+                renderMyTierlists();
+            }
+        }
+
+        // Toast Notification System
+        function showToast(msg, iconClass = "fa-circle-info text-pastel-400") {
+            const toast = document.getElementById('toast-msg');
+            const toastText = document.getElementById('toast-text');
+            const toastIcon = document.getElementById('toast-icon');
+
+            toastText.innerText = msg;
+            toastIcon.className = `fa-solid ${iconClass} text-lg`;
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        // ================= 3-1. MAIN PAGE LOGIC =================
+        function renderPopularMovies(sortBy = 'audience') {
+            const grid = document.getElementById('main-movies-grid');
+            let sorted = [...moviesDB];
+            
+            if (sortBy === 'audience') {
+                sorted.sort((a, b) => b.audience - a.audience);
+                document.getElementById('sort-audience-btn').className = "px-3 py-1.5 rounded-lg bg-white text-pastel-700 shadow-sm font-semibold transition";
+                document.getElementById('sort-rating-btn').className = "px-3 py-1.5 rounded-lg text-slate-600 hover:text-pastel-600 transition";
+            } else {
+                sorted.sort((a, b) => b.rating - a.rating);
+                document.getElementById('sort-rating-btn').className = "px-3 py-1.5 rounded-lg bg-white text-pastel-700 shadow-sm font-semibold transition";
+                document.getElementById('sort-audience-btn').className = "px-3 py-1.5 rounded-lg text-slate-600 hover:text-pastel-600 transition";
+            }
+
+            grid.innerHTML = sorted.map(m => `
+                <div class="bg-white rounded-2xl overflow-hidden border border-pastel-200 shadow-sm hover:shadow-md transition flex flex-col group">
+                    <div class="relative aspect-[2/3] bg-slate-100 overflow-hidden">
+                        <img src="${m.poster}" alt="${m.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" onerror="this.src='https://placehold.co/300x450/D6E6F2/1D4ED8?text=${encodeURIComponent(m.title)}'">
+                        ${m.isCustom ? `<span class="absolute top-2 left-2 bg-emerald-500 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full shadow">출품작</span>` : ''}
+                        <div class="absolute bottom-2 right-2 bg-slate-900/80 backdrop-blur-md text-amber-400 text-xs font-bold px-2 py-0.5 rounded-lg flex items-center">
+                            <i class="fa-solid fa-star text-[10px] mr-1"></i>${m.rating}
+                        </div>
+                    </div>
+                    <div class="p-3 flex-1 flex flex-col justify-between">
+                        <h4 class="font-bold text-slate-900 text-sm truncate" title="${m.title}">${m.title}</h4>
+                        <div class="text-[11px] text-slate-500 mt-1 flex justify-between items-center">
+                            <span>관객 수</span>
+                            <span class="font-semibold text-slate-700">${(m.audience / 10000).toFixed(1)}만 명</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function sortPopularMovies(type) {
+            renderPopularMovies(type);
+        }
+
+        function renderPublicTierlists() {
+            const grid = document.getElementById('public-tierlist-grid');
+            const publics = tierlistsDB.filter(t => t.visibility === 'public');
+
+            grid.innerHTML = publics.map(t => `
+                <div onclick="openDetailModal('${t.id}')" class="bg-white p-5 rounded-2xl border border-pastel-200 shadow-sm hover:shadow-md transition cursor-pointer flex flex-col justify-between group">
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-xs font-semibold px-2.5 py-0.5 bg-pastel-100 text-pastel-700 rounded-full">전체 공개</span>
+                            <span class="text-[11px] text-slate-400">${t.createdAt}</span>
+                        </div>
+                        <h3 class="font-bold text-slate-900 group-hover:text-pastel-600 transition line-clamp-1">${t.title}</h3>
+                        <p class="text-xs text-slate-500 mt-1 line-clamp-2">${t.desc || '설명 없음'}</p>
+                    </div>
+                    
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center text-xs">
+                        <span class="text-slate-600 font-medium">by ${t.author}</span>
+                        <span class="text-pastel-600 font-bold group-hover:translate-x-1 transition flex items-center">
+                            자세히 보기 <i class="fa-solid fa-arrow-right text-[10px] ml-1"></i>
+                        </span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ================= 3-2. LOGIN & AUTH LOGIC =================
+        function openLoginModal() {
+            document.getElementById('nickname-step').classList.add('hidden');
+            openModal('modal-login');
+        }
+
+        function simulateSocialLogin(provider) {
+            tempSocialProvider = provider;
+            document.getElementById('nickname-step').classList.remove('hidden');
+            document.getElementById('nickname-input').focus();
+        }
+
+        function confirmNickname() {
+            const nick = document.getElementById('nickname-input').value.trim();
+            if (!nick) {
+                showToast('사용하실 닉네임을 입력해주세요.', 'fa-triangle-exclamation text-amber-400');
+                return;
+            }
+
+            currentUser = {
+                id: 'user_' + Date.now(),
+                nickname: nick,
+                provider: tempSocialProvider
+            };
+
+            closeModal('modal-login');
+            updateAuthUI();
+            showToast(`${currentUser.nickname}님 환영합니다! (${currentUser.provider} 로그인)`, 'fa-circle-check text-emerald-400');
+        }
+
+        function logout() {
+            currentUser = null;
+            updateAuthUI();
+            showToast('로그아웃 되었습니다.', 'fa-circle-info text-slate-400');
+            if (currentTab === 'mytier') switchTab('main');
+        }
+
+        function updateAuthUI() {
+            const authArea = document.getElementById('auth-area');
+            if (currentUser) {
+                authArea.innerHTML = `
+                    <div class="flex items-center space-x-2 bg-pastel-50 border border-pastel-200 px-3 py-1.5 rounded-xl">
+                        <div class="w-6 h-6 rounded-full bg-pastel-500 text-white text-xs font-bold flex items-center justify-center">
+                            ${currentUser.nickname.charAt(0)}
+                        </div>
+                        <span class="text-xs font-bold text-slate-800">${currentUser.nickname}</span>
+                    </div>
+                    <button onclick="logout()" class="text-xs text-slate-500 hover:text-rose-500 font-medium px-2 py-1 transition">
+                        로그아웃
+                    </button>
+                `;
+            } else {
+                authArea.innerHTML = `
+                    <button onclick="openLoginModal()" class="px-4 py-2 bg-pastel-500 hover:bg-pastel-600 text-white rounded-xl text-xs font-semibold shadow-sm transition flex items-center">
+                        <i class="fa-solid fa-right-to-bracket mr-1.5"></i>로그인
+                    </button>
+                `;
+            }
+        }
+
+        // ================= 3-3. SEARCH & CUSTOM MOVIE LOGIC =================
+        function filterMovieSearch() {
+            const query = document.getElementById('movie-search-input').value.toLowerCase().trim();
+            const filtered = moviesDB.filter(m => m.title.toLowerCase().includes(query));
+            renderSearchMovies(filtered);
+        }
+
+        function renderSearchMovies(list) {
+            const grid = document.getElementById('search-movies-grid');
+            document.getElementById('search-result-count').innerText = `총 ${list.length}개의 영화가 검색됨`;
+
+            if (list.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-12 text-center text-slate-400 text-sm">검색 결과가 없습니다.</div>`;
+                return;
+            }
+
+            grid.innerHTML = list.map(m => `
+                <div class="bg-white rounded-2xl overflow-hidden border border-pastel-200 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+                    <div class="relative aspect-[2/3] bg-slate-100 overflow-hidden">
+                        <img src="${m.poster}" alt="${m.title}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/300x450/D6E6F2/1D4ED8?text=${encodeURIComponent(m.title)}'">
+                        ${m.isCustom ? `<span class="absolute top-2 left-2 bg-emerald-500 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">출품작</span>` : ''}
+                    </div>
+                    <div class="p-3">
+                        <h4 class="font-bold text-slate-900 text-xs truncate" title="${m.title}">${m.title}</h4>
+                        <div class="flex justify-between items-center text-[11px] text-slate-500 mt-2">
+                            <span>평점 <b class="text-amber-500">${m.rating}</b></span>
+                            <button onclick="addMovieToBoardDirectly('${m.id}')" class="px-2 py-1 bg-pastel-100 hover:bg-pastel-500 hover:text-white text-pastel-700 rounded-md font-bold transition">
+                                티어 추가
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openCustomMovieModal() {
+            if (!currentUser) {
+                showToast('로그인이 필요한 기능입니다.', 'fa-lock text-amber-400');
+                openLoginModal();
+                return;
+            }
+            openModal('modal-custom-movie');
+        }
+
+        function saveCustomMovie() {
+            const title = document.getElementById('custom-title').value.trim();
+            const poster = document.getElementById('custom-poster').value.trim() || 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300&q=80';
+            const rating = parseFloat(document.getElementById('custom-rating').value) || 8.0;
+            const audience = parseInt(document.getElementById('custom-audience').value) || 10000;
+
+            if (!title) {
+                showToast('영화 제목을 입력해 주세요.', 'fa-triangle-exclamation text-amber-400');
+                return;
+            }
+
+            const newMovie = {
+                id: 'custom_' + Date.now(),
+                title: title,
+                poster: poster,
+                rating: rating,
+                audience: audience,
+                isCustom: true
+            };
+
+            moviesDB.unshift(newMovie);
+            closeModal('modal-custom-movie');
+            
+            // Re-render
+            renderPopularMovies('audience');
+            renderSearchMovies(moviesDB);
+            renderSelectionShelf();
+
+            showToast(`영화제 출품작 [${title}]이 추가되었습니다!`, 'fa-circle-check text-emerald-400');
+        }
+
+        // ================= 3-4. TIERLIST CREATION & DRAG-DROP LOGIC =================
+        function renderSelectionShelf() {
+            const shelf = document.getElementById('selection-shelf');
+            
+            shelf.innerHTML = moviesDB.map(m => `
+                <div draggable="true" ondragstart="handleDragStart(event, '${m.id}')" onclick="addMovieToBoardDirectly('${m.id}')"
+                    class="relative shrink-0 w-20 sm:w-24 bg-white rounded-xl overflow-hidden border border-pastel-200 shadow-sm cursor-grab hover:shadow-md transition transform hover:-translate-y-1 group">
+                    <img src="${m.poster}" alt="${m.title}" class="w-full h-28 sm:h-32 object-cover pointer-events-none" onerror="this.src='https://placehold.co/300x450/D6E6F2/1D4ED8?text=${encodeURIComponent(m.title)}'">
+                    <div class="p-1 bg-white text-[10px] font-bold text-slate-800 truncate text-center">
+                        ${m.title}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function handleDragStart(e, movieId) {
+            e.dataTransfer.setData('text/plain', movieId);
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            e.currentTarget.classList.remove('drag-over');
+        }
+
+        function handleDrop(e, tierGrade) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drag-over');
+            const movieId = e.dataTransfer.getData('text/plain');
+            if (movieId) {
+                placeMovieInTier(movieId, tierGrade);
+            }
+        }
+
+        function isMovieInBoard(movieId) {
+            for (let grade in currentBoardState) {
+                if (currentBoardState[grade].includes(movieId)) return true;
+            }
+            return false;
+        }
+
+        function placeMovieInTier(movieId, targetTier) {
+            // Rule 3-4: Prevent duplicate placement
+            if (isMovieInBoard(movieId)) {
+                showToast('동일한 영화는 한 티어리스트에 중복 등록할 수 없습니다.', 'fa-circle-exclamation text-amber-400');
+                return;
+            }
+
+            currentBoardState[targetTier].push(movieId);
+            renderTierBoard();
+            showToast(`[${getMovieTitle(movieId)}] 영화가 ${targetTier} 등급에 추가되었습니다.`, 'fa-circle-check text-emerald-400');
+        }
+
+        function addMovieToBoardDirectly(movieId) {
+            if (isMovieInBoard(movieId)) {
+                showToast('이미 등급 보드에 추가된 영화입니다.', 'fa-circle-exclamation text-amber-400');
+                return;
+            }
+            // Default to S tier if clicked directly
+            placeMovieInTier(movieId, 'S');
+            switchTab('create');
+        }
+
+        function removeMovieFromTier(movieId, tierGrade) {
+            currentBoardState[tierGrade] = currentBoardState[tierGrade].filter(id => id !== movieId);
+            renderTierBoard();
+        }
+
+        function renderTierBoard() {
+            ['S', 'A', 'B', 'C', 'D', 'F'].forEach(grade => {
+                const row = document.querySelector(`.tier-row[data-tier="${grade}"]`);
+                const movieIds = currentBoardState[grade];
+
+                row.innerHTML = movieIds.map(id => {
+                    const m = moviesDB.find(item => item.id === id);
+                    if (!m) return '';
+                    return `
+                        <div class="relative w-16 sm:w-20 rounded-lg overflow-hidden border border-slate-700 shadow-md group shrink-0">
+                            <img src="${m.poster}" alt="${m.title}" class="w-full h-20 sm:h-24 object-cover" onerror="this.src='https://placehold.co/300x450/D6E6F2/1D4ED8?text=${encodeURIComponent(m.title)}'">
+                            <button onclick="removeMovieFromTier('${m.id}', '${grade}')" class="absolute top-1 right-1 w-5 h-5 bg-rose-600/90 hover:bg-rose-600 text-white rounded-full text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                            <div class="bg-slate-900/90 text-white text-[9px] font-bold px-1 py-0.5 truncate text-center">
+                                ${m.title}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            });
+        }
+
+        function resetTierBoard() {
+            currentBoardState = { S: [], A: [], B: [], C: [], D: [], F: [] };
+            renderTierBoard();
+            document.getElementById('tier-title').value = '';
+            document.getElementById('tier-desc').value = '';
+            activeEditingId = null;
+        }
+
+        function getMovieTitle(id) {
+            const m = moviesDB.find(item => item.id === id);
+            return m ? m.title : '영화';
+        }
+
+        // ================= SAVE TIERLIST (MAX 5 LIMIT) =================
+        function saveTierlist() {
+            if (!currentUser) {
+                showToast('티어리스트를 저장하려면 소셜 로그인이 필요합니다.', 'fa-lock text-amber-400');
+                openLoginModal();
+                return;
+            }
+
+            const title = document.getElementById('tier-title').value.trim();
+            const desc = document.getElementById('tier-desc').value.trim();
+            const visibility = document.getElementById('tier-visibility').value;
+
+            if (!title) {
+                showToast('티어리스트 제목을 입력해주세요.', 'fa-triangle-exclamation text-amber-400');
+                return;
+            }
+
+            // Count total placed movies
+            const totalMovies = Object.values(currentBoardState).reduce((acc, arr) => acc + arr.length, 0);
+            if (totalMovies === 0) {
+                showToast('최소 한 개 이상의 영화를 등급에 배치해 주세요.', 'fa-triangle-exclamation text-amber-400');
+                return;
+            }
+
+            // Rule 3-4 / MVP Rule 9: Max 5 tierlists per user
+            const userLists = tierlistsDB.filter(t => t.userId === currentUser.id);
+
+            if (!activeEditingId && userLists.length >= 5) {
+                showToast('사용자당 최대 5개까지만 티어리스트를 작성할 수 있습니다.', 'fa-ban text-rose-400');
+                return;
+            }
+
+            if (activeEditingId) {
+                // UPDATE (Rule 3-7: Existing share link invalidated)
+                const existing = tierlistsDB.find(t => t.id === activeEditingId);
+                if (existing) {
+                    existing.title = title;
+                    existing.desc = desc;
+                    existing.visibility = visibility;
+                    existing.items = JSON.parse(JSON.stringify(currentBoardState));
+                    existing.version += 1; // Increment version ID for share link renewal
+
+                    showToast(`티어리스트가 수정되었습니다! 기존 공유 링크는 즉시 접근이 차단됩니다 (v${existing.version} 새 링크 발급).`, 'fa-circle-check text-emerald-400');
+                }
+            } else {
+                // CREATE NEW
+                const newList = {
+                    id: 't_' + Date.now(),
+                    userId: currentUser.id,
+                    author: currentUser.nickname,
+                    title: title,
+                    desc: desc,
+                    visibility: visibility,
+                    version: 1,
+                    items: JSON.parse(JSON.stringify(currentBoardState)),
+                    createdAt: new Date().toISOString().split('T')[0]
+                };
+                tierlistsDB.unshift(newList);
+                showToast('티어리스트가 정상적으로 저장되었습니다!', 'fa-circle-check text-emerald-400');
+            }
+
+            resetTierBoard();
+            renderPublicTierlists();
+            switchTab('mytier');
+        }
+
+        // ================= 3-5. MY TIERLIST & DETAIL LOGIC =================
+        function renderMyTierlists() {
+            const grid = document.getElementById('mytier-grid');
+            const userLists = currentUser ? tierlistsDB.filter(t => t.userId === currentUser.id) : [];
+
+            document.getElementById('mytier-count').innerText = userLists.length;
+
+            if (!currentUser) {
+                grid.innerHTML = `
+                    <div class="col-span-full bg-white p-8 rounded-2xl border border-pastel-200 text-center space-y-3">
+                        <i class="fa-solid fa-user-lock text-3xl text-pastel-400"></i>
+                        <h4 class="font-bold text-slate-800">로그인이 필요합니다</h4>
+                        <p class="text-xs text-slate-500">내가 작성한 티어리스트 목록을 관리하시려면 소셜 로그인해 주세요.</p>
+                        <button onclick="openLoginModal()" class="px-4 py-2 bg-pastel-500 text-white rounded-xl text-xs font-bold shadow transition">소셜 로그인</button>
+                    </div>
+                `;
+                return;
+            }
+
+            if (userLists.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full bg-white p-8 rounded-2xl border border-pastel-200 text-center space-y-3">
+                        <i class="fa-solid fa-folder-open text-3xl text-pastel-300"></i>
+                        <h4 class="font-bold text-slate-800">작성한 티어리스트가 없습니다</h4>
+                        <p class="text-xs text-slate-500">지금 바로 나만의 첫 영화 티어리스트를 만들어 보세요!</p>
+                        <button onclick="switchTab('create')" class="px-4 py-2 bg-pastel-500 text-white rounded-xl text-xs font-bold shadow transition">티어리스트 제작하기</button>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = userLists.map(t => {
+                let badgeClass = "bg-pastel-100 text-pastel-700";
+                let visLabel = "전체 공개";
+                if (t.visibility === 'link') { badgeClass = "bg-amber-100 text-amber-700"; visLabel = "링크 공개"; }
+                if (t.visibility === 'private') { badgeClass = "bg-slate-200 text-slate-700"; visLabel = "비공개"; }
+
+                return `
+                    <div class="bg-white p-5 rounded-2xl border border-pastel-200 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full ${badgeClass}">${visLabel}</span>
+                                <span class="text-[11px] text-slate-400">v${t.version} | ${t.createdAt}</span>
+                            </div>
+                            <h3 class="font-bold text-slate-900 text-base line-clamp-1">${t.title}</h3>
+                            <p class="text-xs text-slate-500 mt-1 line-clamp-2">${t.desc || '설명 없음'}</p>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center">
+                            <button onclick="openDetailModal('${t.id}')" class="px-3 py-1.5 bg-pastel-50 hover:bg-pastel-100 text-pastel-700 rounded-xl text-xs font-bold transition">
+                                <i class="fa-solid fa-eye mr-1"></i>상세 보기
+                            </button>
+                            <span class="text-[10px] text-slate-400">포함 영화: ${Object.values(t.items).reduce((a,b)=>a+b.length,0)}개</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ================= DETAIL MODAL & SHARE LINK VERSIONING =================
+        let currentDetailId = null;
+
+        function openDetailModal(listId) {
+            const item = tierlistsDB.find(t => t.id === listId);
+            if (!item) return;
+
+            currentDetailId = listId;
+            document.getElementById('detail-title').innerText = item.title;
+            document.getElementById('detail-desc').innerText = item.desc || '설명 없음';
+            document.getElementById('detail-author').innerText = `작성자: ${item.author}`;
+
+            // Visibility badge
+            const badge = document.getElementById('detail-visibility-badge');
+            if (item.visibility === 'public') { badge.className = "px-2.5 py-0.5 rounded-full text-xs font-bold bg-pastel-100 text-pastel-700"; badge.innerText = "전체 공개"; }
+            else if (item.visibility === 'link') { badge.className = "px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700"; badge.innerText = "링크 공개"; }
+            else { badge.className = "px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-200 text-slate-700"; badge.innerText = "비공개"; }
+
+            // Share URL generation based on ID and Version (Rule 3-7)
+            const shareUrl = `https://cinetier.app/share/${item.id}?v=${item.version}`;
+            document.getElementById('detail-share-url').innerText = shareUrl;
+
+            // Render detail board
+            const viewBoard = document.getElementById('detail-board-view');
+            const grades = ['S', 'A', 'B', 'C', 'D', 'F'];
+            const gradeColors = { S: 'bg-tier-S', A: 'bg-tier-A', B: 'bg-tier-B', C: 'bg-tier-C', D: 'bg-tier-D', F: 'bg-tier-F' };
+
+            viewBoard.innerHTML = grades.map(g => {
+                const mIds = item.items[g] || [];
+                return `
+                    <div class="flex min-h-[70px] border-b border-slate-800 last:border-0">
+                        <div class="w-16 sm:w-20 ${gradeColors[g]} flex items-center justify-center font-black text-xl text-slate-900 shrink-0 select-none">
+                            ${g}
+                        </div>
+                        <div class="flex-1 p-2 flex flex-wrap gap-2 items-center bg-slate-900/90">
+                            ${mIds.map(id => {
+                                const m = moviesDB.find(x => x.id === id);
+                                if (!m) return '';
+                                return `
+                                    <div class="w-12 sm:w-14 rounded-md overflow-hidden border border-slate-700 shrink-0">
+                                        <img src="${m.poster}" title="${m.title}" class="w-full h-16 sm:h-18 object-cover">
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Owner Action buttons visibility
+            const isOwner = currentUser && currentUser.id === item.userId;
+            document.getElementById('detail-owner-actions').style.display = isOwner ? 'flex' : 'none';
+
+            openModal('modal-detail');
+        }
+
+        function copyShareLink() {
+            const urlText = document.getElementById('detail-share-url').innerText;
+            // Fallback execCommand for iframe compatibility
+            const tempInput = document.createElement('input');
+            tempInput.value = urlText;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+
+            showToast('만료 기간 없는 공유 링크가 클립보드에 복사되었습니다!', 'fa-copy text-emerald-400');
+        }
+
+        function editCurrentTierlist() {
+            if (!currentDetailId) return;
+            const item = tierlistsDB.find(t => t.id === currentDetailId);
+            if (!item) return;
+
+            activeEditingId = item.id;
+            currentBoardState = JSON.parse(JSON.stringify(item.items));
+
+            document.getElementById('tier-title').value = item.title;
+            document.getElementById('tier-desc').value = item.desc;
+            document.getElementById('tier-visibility').value = item.visibility;
+
+            renderTierBoard();
+            closeModal('modal-detail');
+            switchTab('create');
+            showToast('수정 모드로 전환되었습니다. 저장 시 이전 공유 링크는 무효화됩니다.', 'fa-pen-to-square text-amber-400');
+        }
+
+        function deleteCurrentTierlist() {
+            if (!currentDetailId) return;
+            tierlistsDB = tierlistsDB.filter(t => t.id !== currentDetailId);
+            closeModal('modal-detail');
+            renderPublicTierlists();
+            renderMyTierlists();
+            showToast('티어리스트가 삭제되었습니다.', 'fa-trash-can text-rose-400');
+        }
+
+        function openSpecModal() {
+            openModal('modal-spec');
+        }
+    </script>
+</body>
+</html>
